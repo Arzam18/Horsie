@@ -18,13 +18,18 @@ jobs:
           unzip -q android-ndk-r26d-linux.zip
           echo "ANDROID_NDK_HOME=$PWD/android-ndk-r26d" >> $GITHUB_ENV
 
+      - name: Patch NEON constexpr bit_cast issue
+        run: |
+          sed -i 's/alignas(64) constexpr std::array<vec_128i, 256> nnzTable/alignas(64) const std::array<vec_128i, 256> nnzTable/' src/nnue/nn.cpp
+
       - name: Build
         run: |
           make native \
               CXX=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android28-clang++ \
               IS_ARM=1 \
               CXXFLAGS_NATIVE="-march=armv8.2-a+dotprod -DARM" \
-              LDFLAGS="-pthread -static-libstdc++"
+              LDFLAGS="-pthread -static-libstdc++" \
+              CXXFLAGS="-std=c++20 -g -O3 -DNDEBUG -DEVALFILE=\\\"net-015-2048x16x32-132qb-z-p0.bin\\\" -funroll-loops -fexperimental-library"
 
       - name: List build output
         run: |
